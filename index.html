@@ -7,7 +7,9 @@
 <title>3D 혈당 측정기</title>
 
 <style>
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
@@ -31,6 +33,7 @@ body {
   background: #ffffff12;
   backdrop-filter: blur(15px);
   border: 1px solid #ffffff20;
+  z-index: 2;
 }
 
 .panel h3 {
@@ -50,6 +53,7 @@ body {
   transform: translateX(-50%);
   display: flex;
   gap: 8px;
+  z-index: 2;
 }
 
 button {
@@ -60,12 +64,22 @@ button {
   padding: 12px 16px;
   cursor: pointer;
   backdrop-filter: blur(10px);
+  white-space: nowrap;
 }
 
 button:hover {
   background: #ffffff30;
 }
 </style>
+
+<!-- OrbitControls 내부의 "three" import 경로 지정 -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+  }
+}
+</script>
 </head>
 
 <body>
@@ -84,18 +98,17 @@ button:hover {
 </div>
 
 <script type="module">
-import * as THREE from
-'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import * as THREE from 'three';
 
 import { OrbitControls } from
-'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+  'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#17191c');
 
 const camera = new THREE.PerspectiveCamera(
   35,
-  innerWidth / innerHeight,
+  window.innerWidth / window.innerHeight,
   0.1,
   1000
 );
@@ -106,8 +119,8 @@ const renderer = new THREE.WebGLRenderer({
   antialias: true
 });
 
-renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -157,15 +170,15 @@ const black = new THREE.MeshStandardMaterial({
 function roundedShape(w, h, r) {
   const s = new THREE.Shape();
 
-  s.moveTo(-w/2+r, -h/2);
-  s.lineTo(w/2-r, -h/2);
-  s.quadraticCurveTo(w/2, -h/2, w/2, -h/2+r);
-  s.lineTo(w/2, h/2-r);
-  s.quadraticCurveTo(w/2, h/2, w/2-r, h/2);
-  s.lineTo(-w/2+r, h/2);
-  s.quadraticCurveTo(-w/2, h/2, -w/2, h/2-r);
-  s.lineTo(-w/2, -h/2+r);
-  s.quadraticCurveTo(-w/2, -h/2, -w/2+r, -h/2);
+  s.moveTo(-w / 2 + r, -h / 2);
+  s.lineTo(w / 2 - r, -h / 2);
+  s.quadraticCurveTo(w / 2, -h / 2, w / 2, -h / 2 + r);
+  s.lineTo(w / 2, h / 2 - r);
+  s.quadraticCurveTo(w / 2, h / 2, w / 2 - r, h / 2);
+  s.lineTo(-w / 2 + r, h / 2);
+  s.quadraticCurveTo(-w / 2, h / 2, -w / 2, h / 2 - r);
+  s.lineTo(-w / 2, -h / 2 + r);
+  s.quadraticCurveTo(-w / 2, -h / 2, -w / 2 + r, -h / 2);
 
   return s;
 }
@@ -185,7 +198,7 @@ function roundedBox(w, h, d, r, material, x, y, z) {
   );
 
   const mesh = new THREE.Mesh(geo, material);
-  mesh.position.set(x, y, z - d/2);
+  mesh.position.set(x, y, z - d / 2);
   mesh.castShadow = true;
   mesh.receiveShadow = true;
 
@@ -216,38 +229,19 @@ function cylinder(radius, depth, material, x, y, z) {
   mesh.rotation.x = Math.PI / 2;
   mesh.position.set(x, y, z);
   mesh.castShadow = true;
-  device.add(mesh);
 
+  device.add(mesh);
   return mesh;
 }
 
-// -----------------------------------
 // 본체
-// -----------------------------------
-
-roundedBox(
-  58, 105, 13, 8,
-  gray,
-  0, -5, 0
-);
+roundedBox(58, 105, 13, 8, gray, 0, -5, 0);
 
 // 전면 테두리
-roundedBox(
-  49, 48, 1.8, 5,
-  darkGray,
-  0, 19, 7.3
-);
+roundedBox(49, 48, 1.8, 5, darkGray, 0, 19, 7.3);
+roundedBox(46, 45, 1.4, 4, grayLight, 0, 19, 8.5);
 
-roundedBox(
-  46, 45, 1.4, 4,
-  grayLight,
-  0, 19, 8.5
-);
-
-// -----------------------------------
 // LCD 화면 텍스처
-// -----------------------------------
-
 function createDisplayTexture() {
   const canvas = document.createElement('canvas');
   canvas.width = 984;
@@ -265,7 +259,7 @@ function createDisplayTexture() {
   ctx.fillStyle = '#080808';
 
   // 평균
-  ctx.font = '500 95px "Malgun Gothic", sans-serif';
+  ctx.font = '500 95px sans-serif';
   ctx.fillText('평균', 45, 120);
 
   // 파형
@@ -314,10 +308,10 @@ function createDisplayTexture() {
 
   // 포도당 수치
   ctx.fillStyle = '#050505';
-  ctx.font = '500 88px "Malgun Gothic", sans-serif';
+  ctx.font = '500 88px sans-serif';
   ctx.fillText('포도당 수치', 45, 455);
 
-  // 000%
+  // 수치
   ctx.font = 'bold 150px monospace';
   ctx.fillText('000', 565, 450);
 
@@ -326,7 +320,7 @@ function createDisplayTexture() {
 
   // 정상
   ctx.textAlign = 'center';
-  ctx.font = 'bold 205px "Malgun Gothic", sans-serif';
+  ctx.font = 'bold 205px sans-serif';
   ctx.fillText('정상', 492, 710);
 
   const texture = new THREE.CanvasTexture(canvas);
@@ -343,11 +337,7 @@ const displayMaterial = new THREE.MeshStandardMaterial({
   roughness: 0.8
 });
 
-roundedBox(
-  42, 40, 0.7, 3,
-  grayLight,
-  0, 19, 9.5
-);
+roundedBox(42, 40, 0.7, 3, grayLight, 0, 19, 9.5);
 
 // LCD plane
 const display = new THREE.Mesh(
@@ -358,21 +348,9 @@ const display = new THREE.Mesh(
 display.position.set(0, 19, 10.05);
 device.add(display);
 
-// -----------------------------------
 // 날짜 / 시간 LCD
-// -----------------------------------
-
-roundedBox(
-  47, 12, 1.5, 2,
-  darkGray,
-  0, -31, 7.5
-);
-
-roundedBox(
-  42, 8.5, 0.7, 1.5,
-  grayLight,
-  0, -31, 8.6
-);
+roundedBox(47, 12, 1.5, 2, darkGray, 0, -31, 7.5);
+roundedBox(42, 8.5, 0.7, 1.5, grayLight, 0, -31, 8.6);
 
 // 시간 표시
 const dateCanvas = document.createElement('canvas');
@@ -400,10 +378,7 @@ const dateMesh = new THREE.Mesh(
 dateMesh.position.set(0, -31, 9.2);
 device.add(dateMesh);
 
-// -----------------------------------
 // 하단 원형 버튼
-// -----------------------------------
-
 cylinder(14, 2, darkGray, 0, -43, 8.5);
 cylinder(12.5, 2, gray, 0, -43, 10);
 cylinder(9.5, 2, darkGray, 0, -43, 11.5);
@@ -422,60 +397,30 @@ device.add(ring);
 box(2.5, 5, 2, grayLight, 0, -30.5, 10.5);
 box(2.5, 5, 2, grayLight, 0, -55.5, 10.5);
 
-// -----------------------------------
 // 상단 측정 클립
-// -----------------------------------
-
-roundedBox(
-  25, 36, 12, 10,
-  gray,
-  0, 64, 0
-);
+roundedBox(25, 36, 12, 10, gray, 0, 64, 0);
 
 // 클립 앞쪽 긴 스트립
-roundedBox(
-  9, 26, 2, 2,
-  grayLight,
-  0, 61, 7
-);
+roundedBox(9, 26, 2, 2, grayLight, 0, 61, 7);
 
 // 클립 중앙 구조
-roundedBox(
-  12, 9, 2, 2,
-  darkGray,
-  0, 76, 7.5
-);
+roundedBox(12, 9, 2, 2, darkGray, 0, 76, 7.5);
 
 // 안쪽 홈
 box(5, 3, 1, black, 0, 76, 9);
 
 // 클립의 돌출 프롱
 for (const x of [-5, 0, 5]) {
-  box(
-    1.8, 12, 2,
-    grayLight,
-    x, 76, 9
-  );
+  box(1.8, 12, 2, grayLight, x, 76, 9);
 }
 
 // 하단 연결부
-roundedBox(
-  18, 10, 12, 4,
-  gray,
-  0, 47, 0
-);
+roundedBox(18, 10, 12, 4, gray, 0, 47, 0);
 
 // 본체와 클립 연결 브리지
-roundedBox(
-  18, 8, 13, 4,
-  grayLight,
-  0, 46, 0
-);
+roundedBox(18, 8, 13, 4, grayLight, 0, 46, 0);
 
-// -----------------------------------
-// 카메라
-// -----------------------------------
-
+// 카메라 제어
 function resetView() {
   camera.position.set(0, 3, 190);
   controls.target.set(0, 0, 0);
@@ -498,6 +443,7 @@ window.resetView = resetView;
 window.frontView = frontView;
 window.backView = backView;
 
+// 렌더링
 function animate() {
   requestAnimationFrame(animate);
 
@@ -507,11 +453,12 @@ function animate() {
 
 animate();
 
+// 화면 크기 변경 대응
 window.addEventListener('resize', () => {
-  camera.aspect = innerWidth / innerHeight;
+  camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
 
-  renderer.setSize(innerWidth, innerHeight);
+  renderer.setSize(window.innerWidth, window.innerHeight);
 });
 </script>
 
