@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-<title>QWER · 3D Model V6</title>
+<title>QWER · 3D Model V7</title>
 <style>
   :root { color-scheme: dark; --panel: rgba(30,32,35,.82); --line: rgba(255,255,255,.22); --muted:#bfc3c9; }
   * { box-sizing:border-box; }
@@ -11,6 +11,7 @@
   body.ui-hidden .topbar,
   body.ui-hidden .panel,
   body.ui-hidden .controls,
+  body.ui-hidden .settings,
   body.ui-hidden .hint,
   body.ui-hidden .loading { display:none !important; }
   #stage { position:fixed; inset:0; }
@@ -21,13 +22,21 @@
   .sub { color:var(--muted); font-size:10px; margin-top:4px; letter-spacing:.14em; }
   .panel { position:fixed; z-index:2; left:22px; bottom:20px; padding:12px 14px; border:1px solid var(--line); background:var(--panel); backdrop-filter:blur(18px); border-radius:14px; color:#c7c9cc; font-size:11px; line-height:1.65; box-shadow:0 12px 40px #0004; }
   .controls { position:fixed; z-index:3; right:22px; bottom:20px; display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; max-width:calc(100vw - 44px); }
+  .settings { position:fixed; z-index:4; right:22px; bottom:76px; width:min(290px,calc(100vw - 28px)); padding:15px 16px 14px; border:1px solid var(--line); background:rgba(24,26,29,.92); backdrop-filter:blur(20px); border-radius:15px; color:#eef0f2; box-shadow:0 16px 48px #0008; }
+  .settings[hidden] { display:none !important; }
+  .settings-title { font-size:12px; font-weight:750; letter-spacing:.08em; margin-bottom:13px; }
+  .setting-row { display:grid; grid-template-columns:1fr auto; align-items:center; gap:5px 12px; margin-top:12px; }
+  .setting-label { color:#d7d9dc; font-size:11px; }
+  .setting-value { color:#fff; font-size:11px; font-variant-numeric:tabular-nums; min-width:42px; text-align:right; }
+  .setting-row input[type=range] { grid-column:1 / -1; width:100%; margin:3px 0 0; accent-color:#d8dade; cursor:pointer; }
+  .settings-note { margin-top:11px; color:#9da2a9; font-size:10px; line-height:1.5; }
   button { appearance:none; border:1px solid rgba(255,255,255,.17); color:#f4f5f6; background:rgba(35,37,40,.82); backdrop-filter:blur(15px); border-radius:11px; padding:10px 14px; font-size:12px; font-weight:600; cursor:pointer; transition:.18s ease; box-shadow:0 6px 20px #0003; }
   button:hover { background:#55595e; border-color:#aaa; transform:translateY(-1px); }
   button.active { background:#d7d9dc; color:#17191c; border-color:#fff; }
   .hint { position:fixed; right:22px; top:22px; z-index:2; color:#9ea2a8; font-size:10px; letter-spacing:.08em; text-align:right; pointer-events:none; }
   .loading { position:fixed; inset:0; z-index:10; display:grid; place-items:center; background:transparent; color:#777; font-size:12px; letter-spacing:.15em; transition:opacity .35s; }
   .loading.hide { opacity:0; pointer-events:none; }
-  @media(max-width:600px) { .topbar{left:14px;top:14px}.panel{left:14px;bottom:14px;font-size:10px;padding:9px 11px}.controls{right:14px;bottom:14px;max-width:58%;gap:6px}button{padding:9px 11px;font-size:11px}.hint{right:14px;top:62px} }
+  @media(max-width:600px) { .topbar{left:14px;top:14px}.panel{left:14px;bottom:14px;font-size:10px;padding:9px 11px}.controls{right:14px;bottom:14px;max-width:72%;gap:6px}.settings{right:14px;bottom:72px}button{padding:9px 11px;font-size:11px}.hint{right:14px;top:62px} }
 </style>
 </head>
 <body>
@@ -35,8 +44,22 @@
 <div class="topbar"><div class="mark">QW</div><div><div class="heading">QWER / DEVICE</div><div class="sub">MONOCHROME 3D RECONSTRUCTION</div></div></div>
 <div class="hint">DRAG TO ROTATE&nbsp; · &nbsp;SCROLL TO ZOOM</div>
 <div class="panel">REFERENCE RECONSTRUCTION<br>무광 회색 바디 · 전면 디스플레이 · 원형 조작부</div>
+<section class="settings" id="settings" aria-label="회전 및 마우스 설정" hidden>
+  <div class="settings-title">조작 감도 설정</div>
+  <div class="setting-row">
+    <label class="setting-label" for="rotationSpeed">자동 회전 속도</label>
+    <output class="setting-value" id="rotationSpeedValue">1.0×</output>
+    <input id="rotationSpeed" type="range" min="0.1" max="8" step="0.1" value="1" />
+  </div>
+  <div class="setting-row">
+    <label class="setting-label" for="mouseSensitivity">마우스 회전 감도</label>
+    <output class="setting-value" id="mouseSensitivityValue">1.0×</output>
+    <input id="mouseSensitivity" type="range" min="0.2" max="3" step="0.1" value="1" />
+  </div>
+  <div class="settings-note">자동 회전은 회전 버튼의 속도, 마우스 감도는 드래그로 돌릴 때의 반응을 조절합니다.</div>
+</section>
 <div class="controls">
-  <button id="front">정면</button><button id="back">후면</button><button id="spin" class="active">자동 회전</button><button id="reset">초기화</button><button id="hideUI">모델만 보기</button>
+  <button id="front">정면</button><button id="back">후면</button><button id="spin" class="active">자동 회전</button><button id="reset">초기화</button><button id="settingsToggle" aria-expanded="false">설정</button><button id="hideUI">모델만 보기</button>
 </div>
 <div class="loading" id="loading">3D MODEL LOADING…</div>
 <script>
@@ -85,6 +108,7 @@ controls.maxDistance = 19;
 controls.maxPolarAngle = Math.PI * .88;
 controls.autoRotate = true;
 controls.autoRotateSpeed = 1.0;
+controls.rotateSpeed = 1.0;
 
 scene.add(new THREE.HemisphereLight(0xcfd5df, 0x24262b, 2.0));
 const key = new THREE.DirectionalLight(0xffffff, 3.1); key.position.set(5,8,7); key.castShadow=true; key.shadow.mapSize.set(2048,2048); key.shadow.camera.left=-7;key.shadow.camera.right=7;key.shadow.camera.top=8;key.shadow.camera.bottom=-7; scene.add(key);
@@ -264,11 +288,35 @@ document.getElementById('back').addEventListener('click',()=>setView('back'));
 document.getElementById('spin').addEventListener('click',e=>{controls.autoRotate=!controls.autoRotate;e.currentTarget.classList.toggle('active',controls.autoRotate)});
 document.getElementById('reset').addEventListener('click',()=>{camera.position.set(7.1,5.2,10.8);controls.target.set(0,.55,0);controls.autoRotate=true;document.getElementById('spin').classList.add('active');controls.update()});
 
+// Live controls for automatic orbit speed and pointer-drag sensitivity.
+const settingsPanel = document.getElementById('settings');
+const settingsToggle = document.getElementById('settingsToggle');
+const rotationSpeed = document.getElementById('rotationSpeed');
+const rotationSpeedValue = document.getElementById('rotationSpeedValue');
+const mouseSensitivity = document.getElementById('mouseSensitivity');
+const mouseSensitivityValue = document.getElementById('mouseSensitivityValue');
+settingsToggle.addEventListener('click', () => {
+  settingsPanel.hidden = !settingsPanel.hidden;
+  settingsToggle.classList.toggle('active', !settingsPanel.hidden);
+  settingsToggle.setAttribute('aria-expanded', String(!settingsPanel.hidden));
+});
+rotationSpeed.addEventListener('input', () => {
+  controls.autoRotateSpeed = Number(rotationSpeed.value);
+  rotationSpeedValue.value = `${controls.autoRotateSpeed.toFixed(1)}×`;
+  rotationSpeedValue.textContent = rotationSpeedValue.value;
+});
+mouseSensitivity.addEventListener('input', () => {
+  controls.rotateSpeed = Number(mouseSensitivity.value);
+  mouseSensitivityValue.value = `${controls.rotateSpeed.toFixed(1)}×`;
+  mouseSensitivityValue.textContent = mouseSensitivityValue.value;
+});
+
 // Hide every interface element so the viewer shows only the 3D model.
 // Press Q at any time to toggle the interface back on or off.
 function toggleUI(force){
   const hidden = typeof force === 'boolean' ? force : !document.body.classList.contains('ui-hidden');
   document.body.classList.toggle('ui-hidden', hidden);
+  if (hidden) { settingsPanel.hidden = true; settingsToggle.classList.remove('active'); settingsToggle.setAttribute('aria-expanded', 'false'); }
   const button = document.getElementById('hideUI');
   if (button) button.textContent = hidden ? 'UI 표시' : '모델만 보기';
   return hidden;
